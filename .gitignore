@@ -1,0 +1,43 @@
+# 依赖
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 日志与运行时
+logs/
+*.log
+*.log.*
+pids/
+*.pid
+*.seed
+*.pid.lock
+tmp/
+temp/
+.cache/
+
+# 构建产物
+dist/
+build/
+lib/
+coverage/
+.nyc_output/
+*.tsbuildinfo
+
+# 环境变量
+.env
+.env.*.local
+.env.local
+!.env.example
+
+# 操作系统/编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# 其他常见工具
+.eslintcache
+.prettier-cache

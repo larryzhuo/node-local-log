@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>本地日志查看器</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div id="loginContainer" class="container">
+        <div class="login-box">
+            <h2><i class="fas fa-file-alt"></i> 本地日志查看器</h2>
+            <form id="loginForm">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" id="username" placeholder="用户名" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="password" placeholder="密码" required>
+                </div>
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt"></i> 登录
+                </button>
+            </form>
+            <div id="loginError" class="error-message"></div>
+        </div>
+    </div>
+
+    <!-- 主界面 -->
+    <div id="mainContainer" class="container hidden">
+        <!-- 顶部导航栏 -->
+        <header class="header">
+            <div class="header-left">
+                <h1><i class="fas fa-file-alt"></i> 本地日志查看器</h1>
+            </div>
+            <div class="header-right">
+                <span id="currentUser"></span>
+                <!-- <button id="alertConfigBtn" class="btn btn-warning">
+                    <i class="fas fa-bell"></i> 告警配置
+                </button> -->
+                <button id="logoutBtn" class="btn btn-secondary">
+                    <i class="fas fa-sign-out-alt"></i> 退出
+                </button>
+            </div>
+        </header>
+
+        <!-- 主要内容区域 -->
+        <div class="main-content">
+            <!-- 左侧文件浏览器 -->
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <h3><i class="fas fa-folder"></i> 文件浏览器</h3>
+                    <button id="refreshBtn" class="btn btn-sm">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="breadcrumb">
+                    <span id="currentPath">/</span>
+                </div>
+                <div class="file-list" id="fileList">
+                    <!-- 文件列表将在这里动态加载 -->
+                </div>
+            </div>
+
+            <!-- 右侧日志查看区域 -->
+            <div class="content">
+                <div class="content-header">
+                    <h3 id="currentFile">选择文件查看日志</h3>
+                    <div class="file-info" id="fileInfo"></div>
+                </div>
+
+                <!-- 搜索和分页控制 -->
+                <div class="controls">
+                    <div class="search-box">
+                        <input type="text" id="searchKeyword" placeholder="输入关键词搜索...">
+                        <button id="searchBtn" class="btn btn-primary">
+                            <i class="fas fa-search"></i> 搜索
+                        </button>
+                        <button id="clearSearchBtn" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> 清除
+                        </button>
+                    </div>
+                    <div class="pagination-controls">
+                        <select id="pageSize">
+                            <option value="20">20条/页</option>
+                            <option value="50" selected>50条/页</option>
+                            <option value="100">100条/页</option>
+                            <option value="200">200条/页</option>
+                        </select>
+                        <button id="prevPage" class="btn btn-sm">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <span id="pageInfo">第 1 页，共 1 页</span>
+                        <button id="nextPage" class="btn btn-sm">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 日志内容 -->
+                <div class="log-container">
+                    <div class="log-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>行号</th>
+                                    <th>级别</th>
+                                    <th>时间</th>
+                                    <th>方法</th>
+                                    <th>URL</th>
+                                    <th>消息</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logTableBody">
+                                <!-- 日志内容将在这里动态加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 加载状态 -->
+                <div id="loading" class="loading hidden">
+                    <i class="fas fa-spinner fa-spin"></i> 加载中...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日志详情模态框 -->
+    <div id="logModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>日志详情</h3>
+                <button id="closeModal" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <pre id="logDetail"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- 告警配置模态框 -->
+    <div id="alertModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-bell"></i> 告警配置</h3>
+                <button id="closeAlertModal" class="close-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="alertConfigForm">
+                    <div class="form-group">
+                        <label for="alertEnabled">
+                            <input type="checkbox" id="alertEnabled">
+                            启用告警功能
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="alertUrl">告警URL:</label>
+                        <input type="url" id="alertUrl" placeholder="https://your-webhook-url.com/alert" class="form-control">
+                        <small>支持HTTP/HTTPS，将接收POST请求</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="alertInterval">检查间隔 (毫秒):</label>
+                        <input type="number" id="alertInterval" value="60000" min="10000" step="1000" class="form-control">
+                        <small>建议不少于10秒</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="alertThreshold">告警阈值:</label>
+                        <input type="number" id="alertThreshold" value="1" min="1" class="form-control">
+                        <small>错误日志数量达到此值时触发告警</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="alertCooldown">冷却时间 (毫秒):</label>
+                        <input type="number" id="alertCooldown" value="300000" min="60000" step="60000" class="form-control">
+                        <small>两次告警之间的最小间隔时间</small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 保存配置
+                        </button>
+                        <button type="button" id="testAlertBtn" class="btn btn-warning">
+                            <i class="fas fa-paper-plane"></i> 测试告警
+                        </button>
+                        <button type="button" id="cancelAlertConfig" class="btn btn-secondary">
+                            取消
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="alert-status">
+                    <h4>当前状态</h4>
+                    <div id="alertStatusInfo">
+                        <!-- 状态信息将在这里动态加载 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
