@@ -106,7 +106,7 @@ async function monitorLogFiles(config) {
     mtimeOld = stats.mtimeMs
     lineCountOld = lines.length;
   } catch(e) {
-    console.warn(e);
+    // console.warn(e);
   }
 }
 
