@@ -4,6 +4,9 @@
   "description": "本地日志文件查看服务器",
   "main": "index.js",
   "types": "index.d.ts",
+  "bin": {
+    "node-local-log": "bin/node-local-log"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"

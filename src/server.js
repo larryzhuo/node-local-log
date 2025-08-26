@@ -1,13 +1,8 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const fs = require('fs-extra');
 const path = require('path');
-const https = require('https');
-const http = require('http');
 const initRouter = require('./router');
 const { startMonitoring } = require('./monitor');
 
@@ -58,7 +53,7 @@ class LogServer {
 
 
     // 错误处理中间件
-    this.app.use((err, req, res, next) => {
+    this.app.use((err, req, res) => {
       console.error('服务器错误:', err);
       res.status(500).json({ error: '服务器内部错误' });
     });
@@ -76,8 +71,6 @@ class LogServer {
     this.server = this.app.listen(this.config.port, () => {
       console.log(`服务器运行在 http://localhost:${this.config.port}`);
       console.log(`静态文件根目录: ${path.resolve(this.config.staticRoot)}`);
-      console.log(`默认用户名: ${this.config.username}`);
-      console.log(`默认密码: ${this.config.password}`);
       
       // 启动告警监控
       startMonitoring(this.config);
