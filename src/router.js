@@ -63,42 +63,6 @@ function initRouter(app, config) {
     res.json({ valid: true, user: req.user });
   });
 
-  // 获取告警配置
-  app.get('/api/alert/config', authenticateToken, (req, res) => {
-    res.json({
-      enabled: config.alertEnabled,
-      url: config.alertUrl,
-      interval: config.alertInterval,
-      threshold: config.alertThreshold,
-      cooldown: config.alertCooldown,
-      isMonitoring: alertState.isMonitoring,
-      lastAlertTime: alertState.lastAlertTime,
-      errorCount: alertState.errorCount
-    });
-  });
-
-  // 更新告警配置
-  app.post('/api/alert/config', authenticateToken, (req, res) => {
-    try {
-      const { enabled, url, interval, threshold, cooldown } = req.body;
-      
-      if (enabled !== undefined) config.alertEnabled = enabled;
-      if (url !== undefined) config.alertUrl = url;
-      if (interval !== undefined) config.alertInterval = parseInt(interval);
-      if (threshold !== undefined) config.alertThreshold = parseInt(threshold);
-      if (cooldown !== undefined) config.alertCooldown = parseInt(cooldown);
-      
-      // 如果启用了告警但监控未启动，则启动监控
-      if (config.alertEnabled && !alertState.isMonitoring) {
-        startMonitoring();
-      }
-      
-      res.json({ success: true, message: '告警配置已更新' });
-    } catch (error) {
-      console.error('更新告警配置失败:', error);
-      res.status(500).json({ error: '更新告警配置失败' });
-    }
-  });
 
   // 手动触发告警测试
   app.post('/api/alert/test', authenticateToken, async (req, res) => {

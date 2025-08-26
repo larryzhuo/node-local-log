@@ -26,8 +26,8 @@ class LogServer {
       // 告警配置
       alertUrl: options.alertUrl || '',
       alertEnabled: options.alertEnabled || false,
+      errorFile: options.errorFile || '', //监控的错误日志路径
       alertInterval: options.alertInterval || 60000, // 默认1分钟检查一次
-      alertThreshold: options.alertThreshold || 1, // 默认1个错误就告警
       alertCooldown: options.alertCooldown || 300000 // 默认5分钟冷却时间
     };
 

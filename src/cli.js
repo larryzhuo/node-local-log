@@ -48,8 +48,8 @@ function normalizeOptions(raw) {
     maxPageSize: toNum(raw['max-page-size'] || raw.maxPageSize),
     alertUrl: raw['alert-url'] || raw.alertUrl,
     alertEnabled: raw['alert-enabled'] !== undefined ? toBool(raw['alert-enabled']) : undefined,
+    errorFile: raw['error-file'],
     alertInterval: toNum(raw['alert-interval'] || raw.alertInterval),
-    alertThreshold: toNum(raw['alert-threshold'] || raw.alertThreshold),
     alertCooldown: toNum(raw['alert-cooldown'] || raw.alertCooldown),
   };
 }
@@ -72,7 +72,6 @@ Options:
   --alert-url <url>             告警 URL
   --alert-enabled [true|false]  启用告警（默认 false）
   --alert-interval <ms>         告警检查间隔（默认 60000）
-  --alert-threshold <n>         告警阈值（默认 1）
   --alert-cooldown <ms>         告警冷却时间（默认 300000）
   -h, --help                    显示帮助
 `);

@@ -5,8 +5,8 @@ import type { Server as HttpServer } from "http";
 export interface AlertConfig {
   alertEnabled: boolean;
   alertUrl: string;
+  errorFile: string;
   alertInterval: number;
-  alertThreshold: number;
   alertCooldown: number;
 }
 

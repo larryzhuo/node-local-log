@@ -41,7 +41,6 @@ const alertConfigForm = document.getElementById('alertConfigForm');
 const alertEnabled = document.getElementById('alertEnabled');
 const alertUrl = document.getElementById('alertUrl');
 const alertInterval = document.getElementById('alertInterval');
-const alertThreshold = document.getElementById('alertThreshold');
 const alertCooldown = document.getElementById('alertCooldown');
 const testAlertBtn = document.getElementById('testAlertBtn');
 const cancelAlertConfig = document.getElementById('cancelAlertConfig');
@@ -217,7 +216,6 @@ function updateAlertConfigForm(config) {
     alertEnabled.checked = config.enabled;
     alertUrl.value = config.url || '';
     alertInterval.value = config.interval || 60000;
-    alertThreshold.value = config.threshold || 1;
     alertCooldown.value = config.cooldown || 300000;
 }
 
@@ -273,7 +271,6 @@ async function handleAlertConfigSubmit(e) {
             enabled: alertEnabled.checked,
             url: alertUrl.value.trim(),
             interval: parseInt(alertInterval.value),
-            threshold: parseInt(alertThreshold.value),
             cooldown: parseInt(alertCooldown.value)
         };
         

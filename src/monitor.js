@@ -12,7 +12,7 @@ const alertState = {
 };
 
 // 发送告警
-async function sendAlert(errorLogs, config) {
+async function sendAlert(config) {
   if (!config.alertEnabled || !config.alertUrl) {
     return;
   }
@@ -27,18 +27,10 @@ async function sendAlert(errorLogs, config) {
 
   try {
     const alertData = {
-      timestamp: new Date().toISOString(),
-      alertType: 'error_log_detected',
-      errorCount: errorLogs.length,
-      errors: errorLogs.map(log => ({
-        file: log.file,
-        lineNumber: log.lineNumber,
-        message: log.message,
-        timestamp: log.timestamp,
-        url: log.url,
-        method: log.method
-      })),
-      summary: `检测到 ${errorLogs.length} 个错误日志`
+      "msg_type": "text",
+      "content": {
+          "text": `错误日志发生变动: ${config.errorFile}`
+      }
     };
 
     const url = new URL(config.alertUrl);
@@ -123,44 +115,28 @@ async function checkFileForErrors(filePath, config) {
   }
 }
 
+
+let mtimeOld = 0;
+let lineCountOld = 0;
+
 // 监控所有日志文件
 async function monitorLogFiles(config) {
-  if (!config.alertEnabled) {
+  if (!config.alertEnabled || !config.errorFile) {
     return;
   }
+  let filePath = config.errorFile;
+  const stats = await fs.promises.stat(filePath);
+  const content = await fs.promises.readFile(filePath, 'utf8');
+  const lines = content.split('\n').filter(line => line.trim() !== '');
 
-  try {
-    const allErrorLogs = [];
-    
-    // 递归遍历日志目录
-    async function scanDirectory(dirPath) {
-      const items = await fs.readdir(dirPath);
-      
-      for (const item of items) {
-        const fullPath = path.join(dirPath, item);
-        const stats = await fs.stat(fullPath);
-        
-        if (stats.isDirectory()) {
-          await scanDirectory(fullPath);
-        } else if (stats.isFile() && item.endsWith('.log')) {
-          const errorLogs = await checkFileForErrors(fullPath, config);
-          allErrorLogs.push(...errorLogs);
-        }
-      }
+  if(mtimeOld && lineCountOld) {
+    if(mtimeOld != stats.mtimeMs && lineCountOld != lines.length) {
+      //告警
+      await sendAlert(config);
     }
-
-    await scanDirectory(config.staticRoot);
-
-    // 如果错误数量超过阈值，发送告警
-    if (allErrorLogs.length >= config.alertThreshold) {
-      console.log(`检测到 ${allErrorLogs.length} 个错误日志，准备发送告警`);
-      await sendAlert(allErrorLogs, config);
-    }
-
-    alertState.errorCount = allErrorLogs.length;
-  } catch (error) {
-    console.error('监控日志文件失败:', error);
   }
+  mtimeOld = stats.mtimeMs
+  lineCountOld = lines.length;
 }
 
 // 启动监控
@@ -177,7 +153,7 @@ function startMonitoring(config) {
 
   console.log(`启动错误日志监控，检查间隔: ${config.alertInterval}ms`);
   console.log(`告警URL: ${config.alertUrl}`);
-  console.log(`告警阈值: ${config.alertThreshold} 个错误`);
+  console.log(`错误日志文件: ${config.errorFile}`);
   console.log(`告警冷却时间: ${config.alertCooldown}ms`);
 
   alertState.isMonitoring = true;
