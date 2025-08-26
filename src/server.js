@@ -53,12 +53,12 @@ class LogServer {
 
 
     // 错误处理中间件
-    this.app.use((err, req, res) => {
+    this.app.use((err, req, res, next) => {
       console.error('服务器错误:', err);
       res.status(500).json({ error: '服务器内部错误' });
     });
 
-    // 404处理
+    // 404处理,放在所有路由之后
     this.app.use((req, res) => {
       res.status(404).json({ error: '接口不存在' });
     });
