@@ -82,39 +82,6 @@ async function sendAlert(config) {
   }
 }
 
-// 检查文件中的错误日志
-async function checkFileForErrors(filePath, config) {
-  try {
-    const content = await fs.readFile(filePath, 'utf8');
-    const lines = content.split('\n').filter(line => line.trim() !== '');
-    const errorLogs = [];
-
-    for (let i = 0; i < lines.length; i++) {
-      try {
-        const logData = JSON.parse(lines[i]);
-        if (logData.level === 'error') {
-          errorLogs.push({
-            file: path.relative(config.staticRoot, filePath),
-            lineNumber: i + 1,
-            message: logData.message || '',
-            timestamp: logData.timestamp || '',
-            url: logData.url || '',
-            method: logData.method || '',
-            raw: lines[i]
-          });
-        }
-      } catch (e) {
-        // 忽略非JSON格式的行
-      }
-    }
-
-    return errorLogs;
-  } catch (error) {
-    console.error(`检查文件错误失败: ${filePath}`, error);
-    return [];
-  }
-}
-
 
 let mtimeOld = 0;
 let lineCountOld = 0;
@@ -125,18 +92,22 @@ async function monitorLogFiles(config) {
     return;
   }
   let filePath = config.errorFile;
-  const stats = await fs.promises.stat(filePath);
-  const content = await fs.promises.readFile(filePath, 'utf8');
-  const lines = content.split('\n').filter(line => line.trim() !== '');
+  try {
+    const stats = await fs.promises.stat(filePath);
+    const content = await fs.promises.readFile(filePath, 'utf8');
+    const lines = content.split('\n').filter(line => line.trim() !== '');
 
-  if(mtimeOld && lineCountOld) {
-    if(mtimeOld != stats.mtimeMs && lineCountOld != lines.length) {
-      //告警
-      await sendAlert(config);
+    if(mtimeOld && lineCountOld) {
+      if(mtimeOld != stats.mtimeMs && lineCountOld != lines.length) {
+        //告警
+        await sendAlert(config);
+      }
     }
+    mtimeOld = stats.mtimeMs
+    lineCountOld = lines.length;
+  } catch(e) {
+    console.warn(e);
   }
-  mtimeOld = stats.mtimeMs
-  lineCountOld = lines.length;
 }
 
 // 启动监控
