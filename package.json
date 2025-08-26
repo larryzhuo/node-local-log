@@ -1,6 +1,6 @@
 {
   "name": "node-local-log",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "本地日志文件查看服务器",
   "main": "index.js",
   "types": "index.d.ts",
