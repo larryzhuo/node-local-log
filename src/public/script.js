@@ -23,6 +23,7 @@ const fileInfo = document.getElementById('fileInfo');
 const searchKeyword = document.getElementById('searchKeyword');
 const searchBtn = document.getElementById('searchBtn');
 const clearSearchBtn = document.getElementById('clearSearchBtn');
+const downloadBtn = document.getElementById('downloadBtn');
 const pageSize = document.getElementById('pageSize');
 const prevPage = document.getElementById('prevPage');
 const nextPage = document.getElementById('nextPage');
@@ -92,6 +93,7 @@ function setupEventListeners() {
     
     // 搜索相关
     searchBtn.addEventListener('click', handleSearch);
+    downloadBtn.addEventListener('click', handleDownload);
     clearSearchBtn.addEventListener('click', handleClearSearch);
     searchKeyword.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
@@ -473,7 +475,7 @@ function renderLogs(data) {
             <td>${log.lineNumber}</td>
             <td><span class="log-level ${log.level}">${log.level}</span></td>
             <td>${log.timestamp}</td>
-            <td>${log.method}</td>
+            <td>${log.reqId}</td>
             <td class="log-url" title="${log.url}">${log.url}</td>
             <td class="log-message" title="${log.message}">${log.message}</td>
             <td>
@@ -520,6 +522,43 @@ function handleSearch() {
     currentKeyword = searchKeyword.value.trim();
     currentPage = 1;
     loadLogs();
+}
+
+async function handleDownload() {
+    if (!currentFile) {
+        alert('先选择日志文件');
+        return;
+    };
+
+    const params = new URLSearchParams({
+        file: currentFile,
+    });
+
+    const response = await fetch(`/api/download?${params}`, {
+        headers: {
+            'Authorization': `Bearer ${currentToken}`
+        }
+    });
+    
+    if (!response.ok) {
+        throw new Error('获取日志失败');
+    }
+    // 读取文件名
+    let filename = currentFile.split('/').pop();
+    const cd = response.headers.get('Content-Disposition') || '';
+    const m = cd.match(/filename\*?=(?:UTF-8'')?("?)([^";]+)\1/);
+    if (m && m[2]) filename = decodeURIComponent(m[2]);
+
+    // 转为 blob 并触发浏览器下载
+    const blob = await response.blob();
+    const link = document.createElement('a');
+    const objectUrl = URL.createObjectURL(blob);
+    link.href = objectUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(objectUrl);
 }
 
 // 处理清除搜索

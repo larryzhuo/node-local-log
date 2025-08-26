@@ -177,8 +177,47 @@ function initRouter(app, config) {
       res.status(500).json({ error: '获取目录列表失败' });
     }
   });
+  
+  
+   // 下载日志文件
+  app.get('/api/download', authenticateToken, async (req, res) => {
+     try {
+       const { file } = req.query;
+       if (!file) {
+         return res.status(400).json({ error: '文件路径不能为空' });
+       }
+     
+       const filePath = path.join(config.staticRoot, file);
+       const resolvedPath = path.resolve(filePath);
+       const rootPath = path.resolve(config.staticRoot);
+       if (!resolvedPath.startsWith(rootPath)) {
+         return res.status(403).json({ error: '访问被拒绝' });
+       }
+     
+       const stats = await fs.stat(filePath);
+       if (!stats.isFile()) {
+         return res.status(400).json({ error: '指定路径不是文件' });
+       }
+     
+       const filename = path.basename(filePath);
+       res.setHeader('Content-Type', 'application/octet-stream');
+       res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+     
+       const stream = fs.createReadStream(filePath);
+       stream.on('error', (err) => {
+         console.error('下载流错误:', err);
+         if (!res.headersSent) res.status(500).json({ error: '文件读取失败' });
+         else res.end();
+       });
+       stream.pipe(res);
+     } catch (error) {
+       console.error('下载错误:', error);
+       res.status(500).json({ error: '下载失败' });
+     }
+  });
 
-  // 读取日志文件
+
+  // 读取日志文件, 从尾部反向分页
   app.get('/api/logs', authenticateToken, async (req, res) => {
     try {
       const { file, page = 1, limit = config.defaultPageSize, keyword = '' } = req.query;
@@ -216,6 +255,9 @@ function initRouter(app, config) {
           line.toLowerCase().includes(keyword.toLowerCase())
         );
       }
+
+      //整个数组逆序, 最新日志排到前面
+      lines.reverse();
 
       // 分页
       const totalLines = filteredLines.length;
